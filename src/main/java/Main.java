@@ -7,8 +7,8 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Digite o número da conta:");
         int numero = scanner.nextInt();
-        ContaController.cadastrarConta(numero);
-        System.out.println("Conta cadastrada com sucesso!");
+        System.out.println(ContaController.consultarSaldo(numero));
+//        System.out.println("Conta cadastrada com sucesso!");
         scanner.close();
     }
 }
