@@ -1,4 +1,4 @@
-package model;
+package br.imd.sistemabancario.model;
 
 public class Conta {
 

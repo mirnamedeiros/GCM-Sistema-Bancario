@@ -1,7 +1,7 @@
 [
   {
     "numero": 123,
-    "saldo": 120.20
+    "saldo": 120.2
   },
   {
     "numero": 245,
@@ -13,6 +13,10 @@
   },
   {
     "numero": 147,
+    "saldo": 0.0
+  },
+  {
+    "numero": 7,
     "saldo": 0.0
   }
 ]
