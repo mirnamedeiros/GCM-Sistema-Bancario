@@ -1,5 +1,4 @@
 import controller.ContaController;
-
 import java.util.Scanner;
 
 public class Main {

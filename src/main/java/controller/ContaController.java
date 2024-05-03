@@ -2,8 +2,6 @@ package controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import model.Conta;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -12,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import model.Conta;
 
 public class ContaController {
 
@@ -54,17 +53,17 @@ public class ContaController {
             System.out.println("Erro ao cadastrar conta");
         }
     }
-    
-    public static String consultarSaldo(int numero){
+
+    public static String consultarSaldo(int numero) {
 
         List<Conta> contas = carregarContas();
         for (Conta conta : contas) {
-            if(conta.getNumero() == numero){
+            if (conta.getNumero() == numero) {
                 return "O saldo da conta eh " + conta.getSaldo();
             }
         }
-        
+
         return "Conta não existe!";
-            
+
     }
 }
