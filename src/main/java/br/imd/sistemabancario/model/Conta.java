@@ -1,4 +1,4 @@
-package model;
+package br.imd.sistemabancario.model;
 
 public class Conta {
 
@@ -24,5 +24,23 @@ public class Conta {
 
     public void setSaldo(double saldo) {
         this.saldo = saldo;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final Conta conta = (Conta) o;
+        return numero == conta.numero;
+    }
+
+    @Override
+    public int hashCode() {
+        return numero;
     }
 }
