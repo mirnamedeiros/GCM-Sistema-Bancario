@@ -15,14 +15,26 @@ import java.util.List;
 
 public class ContaController {
 
-    public static void cadastrarConta(int numero) {
+    public ContaController() {}
+
+    public void cadastrarConta(int numero) {
         List<Conta> contas = carregarContas();
         Conta novaConta = new Conta(numero);
         contas.add(novaConta);
         salvarContas(contas);
     }
 
-    private static List<Conta> carregarContas() {
+    public boolean verificarContaExistente(int numero) {
+        List<Conta> contas = carregarContas();
+        for (Conta conta : contas) {
+            if (conta.getNumero() == numero) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<Conta> carregarContas() {
         List<Conta> contas = new ArrayList<>();
         try {
             BufferedReader br = new BufferedReader(new FileReader("bd.txt"));
@@ -38,7 +50,7 @@ public class ContaController {
         return contas;
     }
 
-    private static void salvarContas(List<Conta> contas) {
+    private void salvarContas(List<Conta> contas) {
         try {
             // Cria um objeto Gson para converter objetos em JSON
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -55,12 +67,12 @@ public class ContaController {
         }
     }
     
-    public static String consultarSaldo(int numero){
+    public String consultarSaldo(int numero){
 
         List<Conta> contas = carregarContas();
         for (Conta conta : contas) {
             if(conta.getNumero() == numero){
-                return "O saldo da conta eh " + conta.getSaldo();
+                return "O saldo da conta é " + conta.getSaldo();
             }
         }
         
