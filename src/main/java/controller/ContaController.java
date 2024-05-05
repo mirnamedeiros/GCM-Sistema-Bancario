@@ -66,7 +66,7 @@ public class ContaController {
             System.out.println("Erro ao cadastrar conta");
         }
     }
-    
+
     public String consultarSaldo(int numero){
 
         List<Conta> contas = carregarContas();
@@ -75,8 +75,20 @@ public class ContaController {
                 return "O saldo da conta é " + conta.getSaldo();
             }
         }
-        
+
         return "Conta não existe!";
-            
+
+    }
+
+    public void debitarConta(int numero, double valor) {
+        List<Conta> contas = carregarContas();
+
+        for (Conta conta : contas) {
+            if (conta.getNumero() == numero) {
+                conta.setSaldo(conta.getSaldo() - valor);
+                break;
+            }
+        }
+        salvarContas(contas);
     }
 }

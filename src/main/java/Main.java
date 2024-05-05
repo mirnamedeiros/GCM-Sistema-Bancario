@@ -1,5 +1,4 @@
 import controller.ContaController;
-
 import java.util.Scanner;
 
 public class Main {
@@ -42,7 +41,11 @@ public class Main {
                     System.out.println(controller.consultarSaldo(numeroContaConsulta));
                     break;
                 case 3:
-                    // Lógica para debitar
+                    System.out.println("Digite o número da conta:");
+                    int numeroContaDebito = scanner.nextInt();
+                    System.out.println("Digite o valor a ser debitado:");
+                    double valorDebito = scanner.nextDouble();
+                    controller.debitarConta(numeroContaDebito, valorDebito);
                     break;
                 case 4:
                     // Lógica para creditar
