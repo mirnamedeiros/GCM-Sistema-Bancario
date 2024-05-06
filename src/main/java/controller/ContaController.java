@@ -91,4 +91,16 @@ public class ContaController {
         }
         salvarContas(contas);
     }
+    
+    public static void creditarConta(int numero, double valor) {
+        List<Conta> contas = carregarContas();
+        
+        for (Conta conta : contas) {
+            if(conta.getNumero() == numero){
+                conta.setSaldo(conta.getSaldo() + valor);
+                break;
+            }
+        }
+        salvarContas(contas);
+    }
 }

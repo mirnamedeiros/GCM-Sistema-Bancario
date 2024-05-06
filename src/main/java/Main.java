@@ -48,7 +48,11 @@ public class Main {
                     controller.debitarConta(numeroContaDebito, valorDebito);
                     break;
                 case 4:
-                    // Lógica para creditar
+                    System.out.println("Digite o número da conta:");
+                    int numero = scanner.nextInt();
+                    System.out.println("Digite o número valor:");
+                    double valor = scanner.nextDouble();
+                    ContaController.creditarConta(numero, valor);
                     break;
                 case 5:
                     // Lógica para transferir
@@ -62,7 +66,6 @@ public class Main {
             }
 
         } while (opcao != 0);
-
         scanner.close();
     }
 }
