@@ -52,10 +52,16 @@ public class Main {
                     int numero = scanner.nextInt();
                     System.out.println("Digite o número valor:");
                     double valor = scanner.nextDouble();
-                    ContaController.creditarConta(numero, valor);
+                    controller.creditarConta(numero, valor);
                     break;
                 case 5:
-                    // Lógica para transferir
+                    System.out.println("Digite o número da conta de origem:");
+                    int numeroOrigem = scanner.nextInt();
+                    System.out.println("Digite o número da conta de destino:");
+                    int numeroDestino = scanner.nextInt();
+                    System.out.println("Digite o valor a ser transferido:");
+                    double valorTransferencia = scanner.nextDouble();
+                    controller.transferir(numeroOrigem, numeroDestino, valorTransferencia);
                     break;
                 case 0:
                     System.out.println("Saindo...");
