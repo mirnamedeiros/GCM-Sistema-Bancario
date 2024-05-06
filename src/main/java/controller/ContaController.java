@@ -92,7 +92,7 @@ public class ContaController {
         salvarContas(contas);
     }
     
-    public static void creditarConta(int numero, double valor) {
+    public void creditarConta(int numero, double valor) {
         List<Conta> contas = carregarContas();
         
         for (Conta conta : contas) {
@@ -102,5 +102,27 @@ public class ContaController {
             }
         }
         salvarContas(contas);
+    }
+
+    public void transferir(int numeroOrigem, int numeroDestino, double valorTransferencia) {
+        List<Conta> contas = carregarContas();
+        Conta contaOrigem = null;
+        Conta contaDestino = null;
+
+        for (Conta conta : contas) {
+            if (conta.getNumero() == numeroOrigem) {
+                contaOrigem = conta;
+            } else if (conta.getNumero() == numeroDestino) {
+                contaDestino = conta;
+            }
+        }
+
+        if (contaOrigem != null && contaDestino != null) {
+            contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
+            contaDestino.setSaldo(contaDestino.getSaldo() + valorTransferencia);
+            salvarContas(contas);
+        } else {
+            System.out.println("Conta de origem ou destino não encontrada");
+        }
     }
 }
