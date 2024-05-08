@@ -2,8 +2,6 @@ package controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import model.Conta;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -12,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import model.Conta;
 
 public class ContaController {
 
@@ -67,11 +66,11 @@ public class ContaController {
         }
     }
 
-    public String consultarSaldo(int numero){
+    public String consultarSaldo(int numero) {
 
         List<Conta> contas = carregarContas();
         for (Conta conta : contas) {
-            if(conta.getNumero() == numero){
+            if (conta.getNumero() == numero) {
                 return "O saldo da conta é " + conta.getSaldo();
             }
         }
@@ -85,18 +84,23 @@ public class ContaController {
 
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
+                final var novoSaldo = conta.getSaldo() - valor;
+                if (novoSaldo < 0) {
+                    System.out.println("Saldo insuficiente");
+                    break;
+                }
                 conta.setSaldo(conta.getSaldo() - valor);
                 break;
             }
         }
         salvarContas(contas);
     }
-    
+
     public void creditarConta(int numero, double valor) {
         List<Conta> contas = carregarContas();
-        
+
         for (Conta conta : contas) {
-            if(conta.getNumero() == numero){
+            if (conta.getNumero() == numero) {
                 conta.setSaldo(conta.getSaldo() + valor);
                 break;
             }
@@ -118,9 +122,14 @@ public class ContaController {
         }
 
         if (contaOrigem != null && contaDestino != null) {
-            contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
-            contaDestino.setSaldo(contaDestino.getSaldo() + valorTransferencia);
-            salvarContas(contas);
+            final var novoSaldoOrigem = contaOrigem.getSaldo() - valorTransferencia;
+            if (novoSaldoOrigem < 0) {
+                System.out.println("Saldo insuficiente");
+            } else {
+                contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
+                contaDestino.setSaldo(contaDestino.getSaldo() + valorTransferencia);
+                salvarContas(contas);
+            }
         } else {
             System.out.println("Conta de origem ou destino não encontrada");
         }
