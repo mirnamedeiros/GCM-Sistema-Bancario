@@ -1,17 +1,9 @@
 package controller;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import model.Conta;
 import model.ContaBonus;
+import model.ContaPoupanca;
 
 public class ContaController {
     
@@ -37,10 +29,12 @@ public class ContaController {
     }
 
     public void cadastrarConta(int numero, int tipo) {
-        if(tipo == 1){
+        if (tipo == 1) {
             contas.add(new Conta(numero));
         } else if (tipo == 2) {
             contas.add(new ContaBonus(numero));
+        } else if (tipo == 3) {
+            contas.add(new ContaPoupanca(numero));
         }
         
     }
@@ -123,6 +117,14 @@ public class ContaController {
             }
         } else {
             System.out.println("Conta de origem ou destino não encontrada");
+        }
+    }
+
+    public void contabilizarJuros(double taxaJuros) {
+        for (Conta conta : contas) {
+            if (conta instanceof ContaPoupanca) {
+                ((ContaPoupanca) conta).renderJuros(taxaJuros);
+            }
         }
     }
 }
