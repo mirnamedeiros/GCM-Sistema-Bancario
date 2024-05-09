@@ -22,12 +22,19 @@ public class Main {
 
             switch (opcao) {
                 case 1:
+                    System.out.println("Tipo da conta:");
+                    System.out.println("1 - Conta Normal");
+                    System.out.println("2 - Conta Bônus");
+                    System.out.print("Escolha uma opção: ");
+                    int tipoConta = scanner.nextInt();
+                    
                     boolean contaCriada = false;
                     do {
                         System.out.println("Digite o número da nova conta:");
                         int numeroConta = scanner.nextInt();
                         if (!controller.verificarContaExistente(numeroConta)) {
-                            controller.cadastrarConta(numeroConta);
+                            // tipoConta = 1 -> Conta Normal   ||   tipoConta = 2 -> Conta Bonus
+                            controller.cadastrarConta(numeroConta, tipoConta);
                             System.out.println("Conta criada com sucesso!");
                             contaCriada = true;
                         } else {

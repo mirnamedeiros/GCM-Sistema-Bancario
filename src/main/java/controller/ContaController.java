@@ -11,20 +11,41 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import model.Conta;
+import model.ContaBonus;
 
 public class ContaController {
+    
+    private ArrayList<Conta> contas = new ArrayList();
 
-    public ContaController() {}
+    public ContaController() {
+        popularContas();
+    }
+    
+    public void popularContas(){
+        contas.add(new Conta(123));
+        contas.get(0).setSaldo(568);
+        contas.add(new Conta(456));
+        contas.get(1).setSaldo(59);
+        contas.add(new Conta(789));
+        contas.get(2).setSaldo(15);
+        contas.add(new Conta(159));
+        contas.get(3).setSaldo(1000);
+        contas.add(new ContaBonus(444));
+        contas.get(4).setSaldo(65);
+        contas.add(new ContaBonus(555));
+        contas.get(5).setSaldo(1900);
+    }
 
-    public void cadastrarConta(int numero) {
-        List<Conta> contas = carregarContas();
-        Conta novaConta = new Conta(numero);
-        contas.add(novaConta);
-        salvarContas(contas);
+    public void cadastrarConta(int numero, int tipo) {
+        if(tipo == 1){
+            contas.add(new Conta(numero));
+        } else if (tipo == 2) {
+            contas.add(new ContaBonus(numero));
+        }
+        
     }
 
     public boolean verificarContaExistente(int numero) {
-        List<Conta> contas = carregarContas();
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
                 return true;
@@ -33,45 +54,14 @@ public class ContaController {
         return false;
     }
 
-    private List<Conta> carregarContas() {
-        List<Conta> contas = new ArrayList<>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("bd.txt"));
-            Gson gson = new Gson();
-            // Converte o conteúdo do arquivo para um array de contas
-            Conta[] contaArray = gson.fromJson(br, Conta[].class);
-            br.close();
-
-            contas.addAll(Arrays.asList(contaArray));
-        } catch (IOException e) {
-            System.out.println("Erro ao ler o arquivo");
-        }
-        return contas;
-    }
-
-    private void salvarContas(List<Conta> contas) {
-        try {
-            // Cria um objeto Gson para converter objetos em JSON
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String jsonContas = gson.toJson(contas);
-
-            FileWriter fw = new FileWriter("bd.txt");
-            PrintWriter pw = new PrintWriter(fw);
-
-            pw.println(jsonContas);
-
-            pw.close();
-        } catch (IOException e) {
-            System.out.println("Erro ao cadastrar conta");
-        }
-    }
-
     public String consultarSaldo(int numero) {
 
-        List<Conta> contas = carregarContas();
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
-                return "O saldo da conta é " + conta.getSaldo();
+                if(conta instanceof ContaBonus){
+                    System.out.println("O bônus da conta é: " + ((ContaBonus) conta).getBonus());
+                }
+                return "O saldo da conta é: " + conta.getSaldo();
             }
         }
 
@@ -80,7 +70,6 @@ public class ContaController {
     }
 
     public void debitarConta(int numero, double valor) {
-        List<Conta> contas = carregarContas();
 
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
@@ -90,26 +79,25 @@ public class ContaController {
                     break;
                 }
                 conta.setSaldo(conta.getSaldo() - valor);
+                if(conta instanceof ContaBonus){
+                    ((ContaBonus) conta).setBonus((int) (((ContaBonus) conta).getBonus() + (int) valor/100));
+                }
                 break;
             }
         }
-        salvarContas(contas);
     }
 
     public void creditarConta(int numero, double valor) {
-        List<Conta> contas = carregarContas();
-
+        
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
                 conta.setSaldo(conta.getSaldo() + valor);
                 break;
             }
         }
-        salvarContas(contas);
     }
 
     public void transferir(int numeroOrigem, int numeroDestino, double valorTransferencia) {
-        List<Conta> contas = carregarContas();
         Conta contaOrigem = null;
         Conta contaDestino = null;
 
@@ -128,7 +116,10 @@ public class ContaController {
             } else {
                 contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
                 contaDestino.setSaldo(contaDestino.getSaldo() + valorTransferencia);
-                salvarContas(contas);
+                if(contaDestino instanceof ContaBonus){
+                    int bonus_total = (int) ((ContaBonus) contaDestino).getBonus() + (int) valorTransferencia/200;
+                    ((ContaBonus) contaDestino).setBonus(bonus_total);
+                }
             }
         } else {
             System.out.println("Conta de origem ou destino não encontrada");
