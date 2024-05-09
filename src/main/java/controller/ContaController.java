@@ -23,11 +23,17 @@ public class ContaController {
     
     public void popularContas(){
         contas.add(new Conta(123));
+        contas.get(0).setSaldo(568);
         contas.add(new Conta(456));
+        contas.get(1).setSaldo(59);
         contas.add(new Conta(789));
+        contas.get(2).setSaldo(15);
         contas.add(new Conta(159));
+        contas.get(3).setSaldo(1000);
         contas.add(new ContaBonus(444));
+        contas.get(4).setSaldo(65);
         contas.add(new ContaBonus(555));
+        contas.get(5).setSaldo(1900);
     }
 
     public void cadastrarConta(int numero, int tipo) {
@@ -52,7 +58,10 @@ public class ContaController {
 
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
-                return "O saldo da conta é " + conta.getSaldo();
+                if(conta instanceof ContaBonus){
+                    System.out.println("O bônus da conta é: " + ((ContaBonus) conta).getBonus());
+                }
+                return "O saldo da conta é: " + conta.getSaldo();
             }
         }
 
@@ -70,6 +79,9 @@ public class ContaController {
                     break;
                 }
                 conta.setSaldo(conta.getSaldo() - valor);
+                if(conta instanceof ContaBonus){
+                    ((ContaBonus) conta).setBonus((int) (((ContaBonus) conta).getBonus() + (int) valor/100));
+                }
                 break;
             }
         }
@@ -104,6 +116,10 @@ public class ContaController {
             } else {
                 contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
                 contaDestino.setSaldo(contaDestino.getSaldo() + valorTransferencia);
+                if(contaDestino instanceof ContaBonus){
+                    int bonus_total = (int) ((ContaBonus) contaDestino).getBonus() + (int) valorTransferencia/200;
+                    ((ContaBonus) contaDestino).setBonus(bonus_total);
+                }
             }
         } else {
             System.out.println("Conta de origem ou destino não encontrada");
