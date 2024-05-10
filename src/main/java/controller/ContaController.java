@@ -80,6 +80,9 @@ public class ContaController {
     }
 
     public void debitarConta(int numero, double valor) {
+        if (valorInvalido(valor)) {
+            return;
+        }
         List<Conta> contas = carregarContas();
 
         for (Conta conta : contas) {
@@ -97,6 +100,9 @@ public class ContaController {
     }
 
     public void creditarConta(int numero, double valor) {
+        if (valorInvalido(valor)) {
+            return;
+        }
         List<Conta> contas = carregarContas();
 
         for (Conta conta : contas) {
@@ -109,6 +115,9 @@ public class ContaController {
     }
 
     public void transferir(int numeroOrigem, int numeroDestino, double valorTransferencia) {
+        if (valorInvalido(valorTransferencia)) {
+            return;
+        }
         List<Conta> contas = carregarContas();
         Conta contaOrigem = null;
         Conta contaDestino = null;
@@ -133,5 +142,13 @@ public class ContaController {
         } else {
             System.out.println("Conta de origem ou destino não encontrada");
         }
+    }
+
+    private boolean valorInvalido(double valor) {
+        final var valorNegativo = valor < 0;
+        if (valorNegativo) {
+            System.out.println("Valor não pode ser negativo");
+        }
+        return valorNegativo;
     }
 }
