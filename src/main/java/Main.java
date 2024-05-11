@@ -38,7 +38,7 @@ public class Main {
                             // tipoConta = 1 -> Conta Normal   ||
                             // tipoConta = 2 -> Conta Bonus    ||
                             // tipoConta = 3 -> Conta Poupanca
-                            if (tipoConta == 3) {
+                            if (tipoConta == 1 || tipoConta == 3) {
                                 System.out.println("Digite o saldo inicial da conta:");
                                 final var saldo = scanner.nextDouble();
                                 controller.cadastrarConta(numeroConta, tipoConta, saldo);

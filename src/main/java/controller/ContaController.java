@@ -35,7 +35,7 @@ public class ContaController {
 
     public void cadastrarConta(int numero, int tipo, double saldo) {
         if (tipo == 1) {
-            contas.add(new Conta(numero));
+            contas.add(new Conta(numero, saldo));
         } else if (tipo == 2) {
             contas.add(new ContaBonus(numero));
         } else if (tipo == 3) {
@@ -88,7 +88,6 @@ public class ContaController {
     }
 
     public void creditarConta(int numero, double valor) {
-
         if (valorInvalido(valor)) {
             return;
         }
