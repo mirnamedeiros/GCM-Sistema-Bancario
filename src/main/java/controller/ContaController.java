@@ -16,9 +16,9 @@ public class ContaController {
 
     public ContaController() {}
 
-    public void cadastrarConta(int numero) {
+    public void cadastrarConta(int numero, double saldoInicial) {
         List<Conta> contas = carregarContas();
-        Conta novaConta = new Conta(numero);
+        Conta novaConta = new Conta(numero, saldoInicial);
         contas.add(novaConta);
         salvarContas(contas);
     }

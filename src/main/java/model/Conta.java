@@ -10,6 +10,11 @@ public class Conta {
         this.saldo = 0.0;
     }
 
+    public Conta(int numero, double saldo) {
+        this.numero = numero;
+        this.saldo = saldo;
+    }
+
     public int getNumero() {
         return numero;
     }
