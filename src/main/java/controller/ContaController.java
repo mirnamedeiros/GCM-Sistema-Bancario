@@ -8,6 +8,7 @@ import model.ContaPoupanca;
 
 public class ContaController {
 
+    private static final double LIMITE_NEGATIVO = -1_000.0;
     private List<Conta> contas = new ArrayList<>();
 
     public ContaController() {
@@ -73,7 +74,7 @@ public class ContaController {
         for (Conta conta : contas) {
             if (conta.getNumero() == numero) {
                 final var novoSaldo = conta.getSaldo() - valor;
-                if (novoSaldo < 0) {
+                if (validaNovoSaldo(conta, novoSaldo)) {
                     System.out.println("Saldo insuficiente");
                     break;
                 }
@@ -116,7 +117,7 @@ public class ContaController {
 
         if (contaOrigem != null && contaDestino != null) {
             final var novoSaldoOrigem = contaOrigem.getSaldo() - valorTransferencia;
-            if (novoSaldoOrigem < 0) {
+            if (validaNovoSaldo(contaOrigem, novoSaldoOrigem)) {
                 System.out.println("Saldo insuficiente");
             } else {
                 contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
@@ -145,5 +146,12 @@ public class ContaController {
                 ((ContaPoupanca) conta).renderJuros(taxaJuros);
             }
         }
+    }
+
+    private boolean validaNovoSaldo(Conta conta, double novoSaldo) {
+        if (!(conta instanceof ContaPoupanca)) {
+            return novoSaldo < LIMITE_NEGATIVO;
+        }
+        return novoSaldo < 0;
     }
 }
