@@ -29,7 +29,7 @@ public class Main {
                     System.out.println("3 - Conta Poupança");
                     System.out.print("Escolha uma opção: ");
                     int tipoConta = scanner.nextInt();
-                    
+
                     boolean contaCriada = false;
                     do {
                         System.out.println("Digite o número da nova conta:");
@@ -38,7 +38,13 @@ public class Main {
                             // tipoConta = 1 -> Conta Normal   ||
                             // tipoConta = 2 -> Conta Bonus    ||
                             // tipoConta = 3 -> Conta Poupanca
-                            controller.cadastrarConta(numeroConta, tipoConta);
+                            if (tipoConta == 3) {
+                                System.out.println("Digite o saldo inicial da conta:");
+                                final var saldo = scanner.nextDouble();
+                                controller.cadastrarConta(numeroConta, tipoConta, saldo);
+                            } else {
+                                controller.cadastrarConta(numeroConta, tipoConta);
+                            }
                             System.out.println("Conta criada com sucesso!");
                             contaCriada = true;
                         } else {

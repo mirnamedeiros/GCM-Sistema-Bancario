@@ -1,13 +1,14 @@
 package controller;
 
 import java.util.ArrayList;
+import java.util.List;
 import model.Conta;
 import model.ContaBonus;
 import model.ContaPoupanca;
 
 public class ContaController {
 
-    private ArrayList<Conta> contas = new ArrayList();
+    private List<Conta> contas = new ArrayList<>();
 
     public ContaController() {
         popularContas();
@@ -20,8 +21,7 @@ public class ContaController {
         contas.get(1).setSaldo(59);
         contas.add(new Conta(789));
         contas.get(2).setSaldo(15);
-        contas.add(new ContaPoupanca(159));
-        contas.get(3).setSaldo(1000);
+        contas.add(new ContaPoupanca(159, 1000));
         contas.add(new ContaBonus(444));
         contas.get(4).setSaldo(65);
         contas.add(new ContaBonus(555));
@@ -29,14 +29,17 @@ public class ContaController {
     }
 
     public void cadastrarConta(int numero, int tipo) {
+        cadastrarConta(numero, tipo, 0d);
+    }
+
+    public void cadastrarConta(int numero, int tipo, double saldo) {
         if (tipo == 1) {
             contas.add(new Conta(numero));
         } else if (tipo == 2) {
             contas.add(new ContaBonus(numero));
         } else if (tipo == 3) {
-            contas.add(new ContaPoupanca(numero));
+            contas.add(new ContaPoupanca(numero, saldo));
         }
-
     }
 
     public boolean verificarContaExistente(int numero) {
