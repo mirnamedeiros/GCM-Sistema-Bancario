@@ -27,7 +27,9 @@ public class Main {
                         System.out.println("Digite o número da nova conta:");
                         int numeroConta = scanner.nextInt();
                         if (!controller.verificarContaExistente(numeroConta)) {
-                            controller.cadastrarConta(numeroConta);
+                            System.out.println("Digite o saldo inicial da conta:");
+                            final var saldoInicial = scanner.nextDouble();
+                            controller.cadastrarConta(numeroConta, saldoInicial);
                             System.out.println("Conta criada com sucesso!");
                             contaCriada = true;
                         } else {
