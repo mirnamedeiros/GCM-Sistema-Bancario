@@ -122,7 +122,7 @@ public class ContaController {
                 contaOrigem.setSaldo(contaOrigem.getSaldo() - valorTransferencia);
                 contaDestino.setSaldo(contaDestino.getSaldo() + valorTransferencia);
                 if (contaDestino instanceof ContaBonus) {
-                    int bonus_total = (int) ((ContaBonus) contaDestino).getBonus() + (int) valorTransferencia / 200;
+                    int bonus_total = (int) ((ContaBonus) contaDestino).getBonus() + (int) valorTransferencia / 150;
                     ((ContaBonus) contaDestino).setBonus(bonus_total);
                 }
             }
