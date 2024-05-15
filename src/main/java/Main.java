@@ -16,20 +16,29 @@ public class Main {
             System.out.println("3. Debitar");
             System.out.println("4. Creditar");
             System.out.println("5. Transferir");
+            System.out.println("6. Render Juros");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
             opcao = scanner.nextInt();
 
             switch (opcao) {
                 case 1:
+                    System.out.println("Tipo da conta:");
+                    System.out.println("1 - Conta Normal");
+                    System.out.println("2 - Conta Bônus");
+                    System.out.println("3 - Conta Poupança");
+                    System.out.print("Escolha uma opção: ");
+                    int tipoConta = scanner.nextInt();
+                    
                     boolean contaCriada = false;
                     do {
                         System.out.println("Digite o número da nova conta:");
                         int numeroConta = scanner.nextInt();
                         if (!controller.verificarContaExistente(numeroConta)) {
-                            System.out.println("Digite o saldo inicial da conta:");
-                            final var saldoInicial = scanner.nextDouble();
-                            controller.cadastrarConta(numeroConta, saldoInicial);
+                            // tipoConta = 1 -> Conta Normal   ||
+                            // tipoConta = 2 -> Conta Bonus    ||
+                            // tipoConta = 3 -> Conta Poupanca
+                            controller.cadastrarConta(numeroConta, tipoConta);
                             System.out.println("Conta criada com sucesso!");
                             contaCriada = true;
                         } else {
@@ -64,6 +73,12 @@ public class Main {
                     System.out.println("Digite o valor a ser transferido:");
                     double valorTransferencia = scanner.nextDouble();
                     controller.transferir(numeroOrigem, numeroDestino, valorTransferencia);
+                    break;
+                case 6:
+                    System.out.println("Digite a taxa de juros:");
+                    double taxaJuros = scanner.nextDouble();
+                    controller.contabilizarJuros(taxaJuros);
+                    System.out.println("Juros contabilizados com sucesso!");
                     break;
                 case 0:
                     System.out.println("Saindo...");

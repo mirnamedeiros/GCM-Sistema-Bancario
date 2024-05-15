@@ -1,18 +1,28 @@
 [
   {
     "numero": 123,
-    "saldo": 210.0
+    "saldo": 568.0
   },
   {
-    "numero": 245,
-    "saldo": 0.0
+    "numero": 456,
+    "saldo": 59.0
   },
   {
-    "numero": 654,
-    "saldo": 0.0
+    "numero": 789,
+    "saldo": 15.0
   },
   {
-    "numero": 147,
-    "saldo": 0.0
+    "numero": 159,
+    "saldo": 1000.0
+  },
+  {    
+    "numero": 444,
+    "saldo": 65.0,
+    "bonus": 10
+  },
+  {    
+    "numero": 555,
+    "saldo": 1900.0,
+    "bonus": 10
   }
 ]
