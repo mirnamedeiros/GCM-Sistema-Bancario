@@ -1,14 +1,24 @@
-import controller.ContaController;
+package br.imd.sistemabancario.controller;
+
+import br.imd.sistemabancario.service.ContaService;
+import org.springframework.stereotype.Controller;
+
 import java.util.Scanner;
 
-public class Main {
-    public static void main(String[] args) {
+@Controller
+public class MenuController {
 
-        ContaController controller = new ContaController();
+    private static final double CONTA_ZERADA = 0.0;
+    private final ContaService contaService;
 
-        Scanner scanner = new Scanner(System.in);
-        int opcao;
+    Scanner scanner = new Scanner(System.in);
+    int opcao;
 
+    public MenuController(ContaService contaService) {
+        this.contaService = contaService;
+    }
+
+    public void run() {
         do {
             System.out.println("\n--- Menu ---");
             System.out.println("1. Criar Conta");
@@ -34,17 +44,16 @@ public class Main {
                     do {
                         System.out.println("Digite o número da nova conta:");
                         int numeroConta = scanner.nextInt();
-                        if (!controller.verificarContaExistente(numeroConta)) {
+                        if (!contaService.verificarContaExistente(numeroConta)) {
                             // tipoConta = 1 -> Conta Normal   ||
                             // tipoConta = 2 -> Conta Bonus    ||
                             // tipoConta = 3 -> Conta Poupanca
+                            var saldo = CONTA_ZERADA;
                             if (tipoConta == 1 || tipoConta == 3) {
                                 System.out.println("Digite o saldo inicial da conta:");
-                                final var saldo = scanner.nextDouble();
-                                controller.cadastrarConta(numeroConta, tipoConta, saldo);
-                            } else {
-                                controller.cadastrarConta(numeroConta, tipoConta);
+                                saldo = scanner.nextDouble();
                             }
+                            contaService.cadastrarConta(numeroConta, tipoConta, saldo);
                             System.out.println("Conta criada com sucesso!");
                             contaCriada = true;
                         } else {
@@ -55,21 +64,21 @@ public class Main {
                 case 2:
                     System.out.println("Digite o número da conta:");
                     int numeroContaConsulta = scanner.nextInt();
-                    System.out.println(controller.consultarSaldo(numeroContaConsulta));
+                    contaService.consultarSaldo(numeroContaConsulta);
                     break;
                 case 3:
                     System.out.println("Digite o número da conta:");
                     int numeroContaDebito = scanner.nextInt();
                     System.out.println("Digite o valor a ser debitado:");
                     double valorDebito = scanner.nextDouble();
-                    controller.debitarConta(numeroContaDebito, valorDebito);
+                    contaService.debitarConta(numeroContaDebito, valorDebito);
                     break;
                 case 4:
                     System.out.println("Digite o número da conta:");
                     int numero = scanner.nextInt();
                     System.out.println("Digite o número valor:");
                     double valor = scanner.nextDouble();
-                    controller.creditarConta(numero, valor);
+                    contaService.creditarConta(numero, valor);
                     break;
                 case 5:
                     System.out.println("Digite o número da conta de origem:");
@@ -78,12 +87,12 @@ public class Main {
                     int numeroDestino = scanner.nextInt();
                     System.out.println("Digite o valor a ser transferido:");
                     double valorTransferencia = scanner.nextDouble();
-                    controller.transferir(numeroOrigem, numeroDestino, valorTransferencia);
+                    contaService.transferir(numeroOrigem, numeroDestino, valorTransferencia);
                     break;
                 case 6:
                     System.out.println("Digite a taxa de juros:");
                     double taxaJuros = scanner.nextDouble();
-                    controller.contabilizarJuros(taxaJuros);
+                    contaService.contabilizarJuros(taxaJuros);
                     System.out.println("Juros contabilizados com sucesso!");
                     break;
                 case 0:
