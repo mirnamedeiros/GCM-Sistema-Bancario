@@ -50,6 +50,7 @@ public class ContaService {
             if (validaNovoSaldo(conta, novoSaldo)) {
                 System.out.println("Saldo insuficiente");
             } else {
+                System.out.println("Saldo");
                 conta.setSaldo(conta.getSaldo() - valor);
                 if (conta instanceof ContaBonus) {
                     ((ContaBonus) conta).setBonus((int) (((ContaBonus) conta).getBonus() + (int) valor / 100));
@@ -98,7 +99,7 @@ public class ContaService {
         }
     }
 
-    private boolean valorInvalido(double valor) {
+    protected boolean valorInvalido(double valor) {
         final var isValorNegativo = valor < 0;
         if (isValorNegativo) {
             System.out.println("Valor não pode ser negativo");
@@ -116,7 +117,7 @@ public class ContaService {
                 .forEach(contaRepository::save);
     }
 
-    private boolean validaNovoSaldo(Conta conta, double novoSaldo) {
+    protected boolean validaNovoSaldo(Conta conta, double novoSaldo) {
         if (!(conta instanceof ContaPoupanca)) {
             return novoSaldo < LIMITE_NEGATIVO;
         }
