@@ -24,8 +24,9 @@ public class ContaRepository {
         contas.add(new ContaBonus(555, 1900));
     }
 
-    public void save(Conta conta) {
+    public Conta save(Conta conta) {
         contas.add(conta);
+        return conta;
     }
 
     public boolean existsByNumero(int numero) {
