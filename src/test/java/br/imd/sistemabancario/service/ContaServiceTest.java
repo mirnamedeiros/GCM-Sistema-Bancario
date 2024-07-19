@@ -294,4 +294,44 @@ public class ContaServiceTest {
         contaService.cadastrarConta(7, 3, 1_000_000.0);
         Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(7, 1_000_000.0));
     }
+
+    // TESTES EM CONSULTAR CONTA
+    // TODO
+
+    //TESTES EM CONSULTAR SALDO
+    @Test
+    void testConsultarSaldoContaBonus() {
+
+        ContaBonus contaBonus = new ContaBonus(1, 100.0);
+        contaBonus.setBonus(50);
+        Mockito.when(contaRepository.findByNumero(1)).thenReturn(Optional.of(contaBonus));
+
+        contaService.consultarSaldo(1);
+
+        String expectedOutput = "O bônus da conta é: 50.0\nO saldo da conta é: 100.0";
+        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+    }
+
+    @Test
+    void testConsultarSaldoConta() {
+
+        Conta conta = new Conta(2, 200.0);
+        Mockito.when(contaRepository.findByNumero(2)).thenReturn(Optional.of(conta));
+
+        contaService.consultarSaldo(2);
+
+        String expectedOutput = "O saldo da conta é: 200.0";
+        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+    }
+
+    @Test
+    void testConsultarSaldoContaNaoExistente() {
+
+        Mockito.when(contaRepository.findByNumero(3)).thenReturn(Optional.empty());
+
+        contaService.consultarSaldo(3);
+
+        String expectedOutput = "Conta não existe!";
+        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+    }
 }
