@@ -4,6 +4,7 @@
  */
 package br.imd.sistemabancario.service;
 
+import br.imd.sistemabancario.model.ContaPoupanca;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -238,5 +239,59 @@ public class ContaServiceTest {
         cd.setSaldo(cd.getSaldo() - valor);
         Mockito.verify(contaRepository, Mockito.times(1)).save(cd);
           
+    }
+
+    // TESTES EM CADASTRAR CONTA
+    @Test
+    void testCadastrarContaTipo1() {
+        contaService.cadastrarConta(1, 1, 100.0);
+
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(1, 100.0));
+    }
+
+    @Test
+    void testCadastrarContaTipo2() {
+        contaService.cadastrarConta(2, 2, 200.0);
+
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaBonus(2, 200.0));
+    }
+
+    @Test
+    void testCadastrarContaTipo3() {
+        contaService.cadastrarConta(3, 3, 300.0);
+
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(3, 300.0));
+    }
+
+    @Test
+    void testCadastrarContaComSaldoZero() {
+        contaService.cadastrarConta(4, 1, 0.0);
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(4, 0.0));
+    }
+
+    @Test
+    void testCadastrarContaComSaldoNegativo() {
+        // TODO acrescentar essa validação no service
+        contaService.cadastrarConta(5, 2, -50.0);
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaBonus(5, -50.0));
+    }
+
+    @Test
+    void testCadastrarContaComTipoInvalido() {
+        contaService.cadastrarConta(6, 4, 100.0);
+        Mockito.verify(contaRepository, Mockito.never()).save(new Conta(6, 100.0));
+    }
+
+    @Test
+    void testCadastrarContaComNumeroNegativo() {
+        // TODO acrescentar essa validação no service
+        contaService.cadastrarConta(-1, 1, 100.0);
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(-1, 100.0));
+    }
+
+    @Test
+    void testCadastrarContaComSaldoAlto() {
+        contaService.cadastrarConta(7, 3, 1_000_000.0);
+        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(7, 1_000_000.0));
     }
 }
