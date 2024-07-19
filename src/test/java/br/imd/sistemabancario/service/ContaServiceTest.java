@@ -243,33 +243,35 @@ public class ContaServiceTest {
 
     // TESTES EM CADASTRAR CONTA
     @Test
+    @DisplayName("Cadastrar Conta Padrão")
     void testCadastrarContaTipo1() {
         contaService.cadastrarConta(1, 1, 100.0);
-
         Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(1, 100.0));
     }
 
     @Test
+    @DisplayName("Cadastrar Conta Bonus")
     void testCadastrarContaTipo2() {
         contaService.cadastrarConta(2, 2, 200.0);
-
         Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaBonus(2, 200.0));
     }
 
     @Test
+    @DisplayName("Cadastrar Conta Poupança")
     void testCadastrarContaTipo3() {
         contaService.cadastrarConta(3, 3, 300.0);
-
         Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(3, 300.0));
     }
 
     @Test
+    @DisplayName("Cadastrar Conta com Saldo Zero")
     void testCadastrarContaComSaldoZero() {
         contaService.cadastrarConta(4, 1, 0.0);
         Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(4, 0.0));
     }
 
     @Test
+    @DisplayName("Cadastrar Conta com Saldo Negativo")
     void testCadastrarContaComSaldoNegativo() {
         // TODO acrescentar essa validação no service
         contaService.cadastrarConta(5, 2, -50.0);
@@ -277,12 +279,14 @@ public class ContaServiceTest {
     }
 
     @Test
+    @DisplayName("Cadastrar Conta com Tipo Inválido")
     void testCadastrarContaComTipoInvalido() {
         contaService.cadastrarConta(6, 4, 100.0);
         Mockito.verify(contaRepository, Mockito.never()).save(new Conta(6, 100.0));
     }
 
     @Test
+    @DisplayName("Cadastrar Conta com Número Negativo")
     void testCadastrarContaComNumeroNegativo() {
         // TODO acrescentar essa validação no service
         contaService.cadastrarConta(-1, 1, 100.0);
@@ -290,6 +294,7 @@ public class ContaServiceTest {
     }
 
     @Test
+    @DisplayName("Cadastrar Conta com Saldo Alto")
     void testCadastrarContaComSaldoAlto() {
         contaService.cadastrarConta(7, 3, 1_000_000.0);
         Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(7, 1_000_000.0));
@@ -298,10 +303,10 @@ public class ContaServiceTest {
     // TESTES EM CONSULTAR CONTA
     // TODO
 
-    //TESTES EM CONSULTAR SALDO
+    // TESTES EM CONSULTAR SALDO
     @Test
+    @DisplayName("Consultar Saldo Conta Bonus")
     void testConsultarSaldoContaBonus() {
-
         ContaBonus contaBonus = new ContaBonus(1, 100.0);
         contaBonus.setBonus(50);
         Mockito.when(contaRepository.findByNumero(1)).thenReturn(Optional.of(contaBonus));
@@ -313,8 +318,8 @@ public class ContaServiceTest {
     }
 
     @Test
+    @DisplayName("Consultar Saldo Conta Padrão")
     void testConsultarSaldoConta() {
-
         Conta conta = new Conta(2, 200.0);
         Mockito.when(contaRepository.findByNumero(2)).thenReturn(Optional.of(conta));
 
@@ -325,8 +330,8 @@ public class ContaServiceTest {
     }
 
     @Test
+    @DisplayName("Consultar Saldo Conta Não Existente")
     void testConsultarSaldoContaNaoExistente() {
-
         Mockito.when(contaRepository.findByNumero(3)).thenReturn(Optional.empty());
 
         contaService.consultarSaldo(3);
@@ -334,4 +339,80 @@ public class ContaServiceTest {
         String expectedOutput = "Conta não existe!";
         assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
     }
+
+    // TESTES EM CREDITAR CONTA
+    @Test
+    @DisplayName("Creditar valor inválido")
+    public void testCreditarValorInvalido() {
+        double valor = -1;
+
+        contaService.creditarConta(1, valor);
+        Mockito.verify(contaRepository, Mockito.times(0)).findByNumero(Mockito.anyInt());
+
+        String expectedOutput = "Valor não pode ser negativo";
+        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+    }
+
+    @Test
+    @DisplayName("Creditar em conta não existente")
+    public void testCreditarContaInexistente() {
+        // TODO acrescentar mensagem de retorno nessa validação no service
+        double valor = 100;
+
+        Mockito.when(contaRepository.findByNumero(1)).thenReturn(Optional.empty());
+
+        contaService.creditarConta(1, valor);
+        Mockito.verify(contaRepository, Mockito.times(0)).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Creditar valor em conta existente")
+    public void testCreditarPadrao() {
+        Conta conta = new Conta(1, 200);
+        double valor = 100;
+
+        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
+
+        double saldoEsperado = conta.getSaldo() + valor;
+
+        contaService.creditarConta(conta.getNumero(), valor);
+
+        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
+        assertEquals(saldoEsperado, conta.getSaldo());
+    }
+
+    @Test
+    @DisplayName("Creditar valor em conta bônus")
+    public void testCreditarBonus() {
+        ContaBonus conta = new ContaBonus(1, 200);
+        double valor = 150;
+
+        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
+
+        double saldoEsperado = conta.getSaldo() + valor;
+        double bonusEsperado = conta.getBonus();
+
+        contaService.creditarConta(conta.getNumero(), valor);
+
+        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
+        assertEquals(saldoEsperado, conta.getSaldo());
+        assertEquals(bonusEsperado, conta.getBonus());
+    }
+
+    @Test
+    @DisplayName("Creditar valor em conta poupança")
+    public void testCreditarPoupanca() {
+        ContaPoupanca conta = new ContaPoupanca(1, 300);
+        double valor = 200;
+
+        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
+
+        double saldoEsperado = conta.getSaldo() + valor;
+
+        contaService.creditarConta(conta.getNumero(), valor);
+
+        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
+        assertEquals(saldoEsperado, conta.getSaldo());
+    }
+
 }
