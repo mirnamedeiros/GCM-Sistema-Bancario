@@ -31,6 +31,11 @@ public class ContaController {
         contaService.cadastrarConta(contaDTO.numero(), contaDTO.tipo(), contaDTO.saldo());
     }
 
+    @GetMapping("/contas/{numero}")
+    public ContaDTO consultarDados(@PathVariable int numero) {
+        return contaService.consultarDados(numero);
+    }
+
     @GetMapping("/contas/{numero}/saldo")
     public ContaDTO consultarSaldo(@PathVariable int numero) {
         return contaService.consultarSaldo(numero)
