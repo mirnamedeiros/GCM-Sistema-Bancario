@@ -4,340 +4,488 @@
  */
 package br.imd.sistemabancario.service;
 
-import br.imd.sistemabancario.model.ContaPoupanca;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-
+import br.imd.sistemabancario.controller.dto.ContaDTO;
+import br.imd.sistemabancario.exception.BadRequestException;
+import br.imd.sistemabancario.exception.NotFoundException;
 import br.imd.sistemabancario.model.Conta;
 import br.imd.sistemabancario.model.ContaBonus;
+import br.imd.sistemabancario.model.ContaPoupanca;
 import br.imd.sistemabancario.repository.ContaRepository;
-import br.imd.sistemabancario.service.ContaService;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Optional;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
 public class ContaServiceTest {
-    
-    @Spy
+
     @InjectMocks
     private ContaService contaService;
-    
-    @Mock
-    private ContaRepository contaRepository;
-     
-    private final PrintStream standardOut = System.out;
-    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
 
-    @BeforeEach
-    public void setUp() {
-        System.setOut(new PrintStream(outputStreamCaptor));
-    }
-    
-    @AfterEach
-    public void tearDown() {
-        System.setOut(standardOut);
-    }
-    
-    // Para funcao debitar ---------------
+    @Spy
+    private ContaRepository contaRepository;
+
     @Test
     @DisplayName("Valor negativo para debitar")
     public void testDebitarValorNegativo() {
-        Mockito.lenient().when(contaService.valorInvalido(-1)).thenReturn(true);
-        
-        contaService.debitarConta(1, -100);
-        Mockito.verify(contaRepository, Mockito.times(0)).findByNumero(1); 
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.debitarConta(1, -100));
+
+        assertThat(exception).hasMessage("Valor não pode ser negativo");
+
+        verify(contaRepository, never()).findByNumero(1);
     }
-    
+
     @Test
     @DisplayName("Debito com saldo insuficiente")
     public void testDebitarSaldoInsuficiente() {
-        Conta conta = new Conta(1, 95);
-        double valor = 100;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
-        
-        
-        var novoSaldo = conta.getSaldo() - valor;
-        Mockito.lenient().when(contaService.validaNovoSaldo(conta, novoSaldo)).thenReturn(true);
-        
-        contaService.debitarConta(conta.getNumero(), valor);
-        Assertions.assertEquals("Saldo insuficiente", outputStreamCaptor.toString()
-        .trim());
-        
+        final var conta = new ContaPoupanca(1, 95);
+        final var valorADebitar = 100;
+
+        when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
+
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.debitarConta(conta.getNumero(), valorADebitar));
+
+        assertThat(exception).hasMessage("Saldo insuficiente");
+
+        verify(contaRepository).findByNumero(conta.getNumero());
     }
-    
+
     @Test
     @DisplayName("Debito concluido conta normal")
     public void testDebitarSuccessNormal() {
-        Conta conta = new Conta(1, 250);
-        double valor = 100;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
-        
+        final var contaCaptor = ArgumentCaptor.forClass(Conta.class);
+        final var conta = new Conta(1, 250);
+        final var valor = 100;
+        final var novoSaldo = conta.getSaldo() - valor;
+
+        when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
+
         contaService.debitarConta(conta.getNumero(), valor);
-        
-        conta.setSaldo(conta.getSaldo() - valor);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
-        
+
+        verify(contaRepository).save(contaCaptor.capture());
+
+        assertThat(contaCaptor.getValue())
+                .matches(c -> c.getSaldo() == novoSaldo)
+                .matches(c -> c.getNumero() == conta.getNumero());
+
     }
-    
+
     @Test
     @DisplayName("Debito concluido conta bonus")
     public void testDebitarSuccessBonus() {
-        ContaBonus conta = new ContaBonus(1, 250);
-        double valor = 249.99;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
-        
+        final var conta = new ContaBonus(1, 250);
+        final var valor = 249.99;
+
+        when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
+
         contaService.debitarConta(conta.getNumero(), valor);
-        
-        conta.setSaldo((conta.getSaldo() - valor) + valor/100);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
-        
+
+        conta.setSaldo((conta.getSaldo() - valor) + valor / 100);
+        verify(contaRepository).save(conta);
+
     }
-    
-    // Para funcao transferir ---------------
+
     @Test
     @DisplayName("Transferir valor invalido")
-    public void testTransferirValorInvalido(){
+    public void testTransferirValorInvalido() {
         double valor = -1;
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(true);
-        
-        contaService.transferir(1, 2, valor);
-        Mockito.verify(contaRepository, Mockito.times(0)).findByNumero(Mockito.anyInt()); 
-        
+
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.transferir(1, 2, valor));
+
+        assertThat(exception).hasMessage("Valor não pode ser negativo");
+
+        verify(contaRepository, never()).findByNumero(1);
+
     }
-    
+
     @Test
     @DisplayName("Transferir com conta origem nao existente")
     public void testTransferirContaOrigemInexistente() {
-        Conta co = new Conta(1, 100);
-        Conta cd = new Conta(2,90);
-        double valor = 10;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        
-        Mockito.when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.empty());
-        Mockito.when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
-        contaService.transferir(co.getNumero(), cd.getNumero(), valor);
-        Assertions.assertEquals("Conta de origem ou destino não encontrada", outputStreamCaptor.toString()
-        .trim());
-          
+        final var co = new Conta(1, 100);
+        final var cd = new Conta(2, 90);
+        final var valor = 10;
+
+        when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.empty());
+        when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
+
+        final var exception = assertThrows(NotFoundException.class,
+                () -> contaService.transferir(co.getNumero(), cd.getNumero(), valor));
+
+        assertThat(exception).hasMessage("Conta de origem ou destino não encontrada");
     }
-    
+
     @Test
     @DisplayName("Transferir com conta destino nao existente")
     public void testTransferirContaDestinoInexistente() {
         Conta co = new Conta(1, 100);
-        Conta cd = new Conta(2,90);
+        Conta cd = new Conta(2, 90);
         double valor = 10;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        
-        Mockito.when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
-        Mockito.when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.empty());
-        contaService.transferir(co.getNumero(), cd.getNumero(), valor);
-        Assertions.assertEquals("Conta de origem ou destino não encontrada", outputStreamCaptor.toString()
-        .trim());
-          
+
+        when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
+        when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.empty());
+
+        final var exception = assertThrows(NotFoundException.class,
+                () -> contaService.transferir(co.getNumero(), cd.getNumero(), valor));
+
+        assertThat(exception).hasMessage("Conta de origem ou destino não encontrada");
     }
-    
+
     @Test
     @DisplayName("Transferir com conta origem e destino nao existente")
     public void testTransferirContaOrigemDestinoInexistente() {
         Conta co = new Conta(1, 100);
-        Conta cd = new Conta(2,90);
+        Conta cd = new Conta(2, 90);
         double valor = 10;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        
-        Mockito.when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.empty());
-        Mockito.when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.empty());
-        contaService.transferir(co.getNumero(), cd.getNumero(), valor);
-        Assertions.assertEquals("Conta de origem ou destino não encontrada", outputStreamCaptor.toString()
-        .trim());
-          
+
+        when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.empty());
+        when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.empty());
+
+        final var exception = assertThrows(NotFoundException.class,
+                () -> contaService.transferir(co.getNumero(), cd.getNumero(), valor));
+
+        assertThat(exception).hasMessage("Conta de origem ou destino não encontrada");
     }
-    
+
     @Test
     @DisplayName("Saldo da transferencia da origem insuficiente")
     public void testTransferirContaNovoSaldoInsuficiente() {
-        Conta co = new Conta(1, 100);
-        Conta cd = new Conta(2,90);
+        Conta co = new ContaPoupanca(1, 100);
+        Conta cd = new ContaPoupanca(2, 90);
         double valor = 101;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        
-        Mockito.when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co)); // validaNovoSaldo
-        Mockito.when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
-        
-        Mockito.lenient().when(contaService.validaNovoSaldo(co, co.getSaldo()- valor)).thenReturn(true);
-        contaService.transferir(co.getNumero(), cd.getNumero(), valor);
-        Assertions.assertEquals("Saldo insuficiente", outputStreamCaptor.toString()
-        .trim());
-          
+
+        when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
+        when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
+
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.transferir(co.getNumero(), cd.getNumero(), valor));
+
+        assertThat(exception).hasMessage("Saldo insuficiente");
     }
-    
+
     @Test
     @DisplayName("Transferencia concluida")
     public void testTransferirSuccess() {
+        final var contaCaptor = ArgumentCaptor.forClass(Conta.class);
         Conta co = new Conta(1, 100);
-        Conta cd = new Conta(2,90);
+        Conta cd = new Conta(2, 90);
         double valor = 99.9;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        
-        Mockito.when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
-        Mockito.when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
-        Mockito.lenient().when(contaService.validaNovoSaldo(co, co.getSaldo()- valor)).thenReturn(false);
+
+        final var saldoExperadoOrigem = co.getSaldo() - valor;
+        final var saldoExperadoDestino = cd.getSaldo() + valor;
+
+        when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
+        when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
+
         contaService.transferir(co.getNumero(), cd.getNumero(), valor);
-        
-        co.setSaldo(co.getSaldo() - valor);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(co);
-        
-        cd.setSaldo(cd.getSaldo() - valor);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(cd);
-          
+
+        verify(contaRepository, times(2)).save(contaCaptor.capture());
+
+        assertThat(contaCaptor.getAllValues().get(0))
+                .matches(c -> c.getSaldo() == saldoExperadoOrigem)
+                .matches(c -> c.getNumero() == co.getNumero());
+
+        assertThat(contaCaptor.getAllValues().get(1))
+                .matches(c -> c.getSaldo() == saldoExperadoDestino)
+                .matches(c -> c.getNumero() == cd.getNumero());
     }
-    
+
     @Test
     @DisplayName("Transferencia concluida em conta bonus")
     public void testTransferirSuccessContaBonus() {
-        Conta co = new Conta(1, 100);
-        ContaBonus cd = new ContaBonus(2,90);
-        double valor = 99.9;
-        
-        Mockito.lenient().when(contaService.valorInvalido(valor)).thenReturn(false);
-        
-        Mockito.when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
-        Mockito.when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
-        Mockito.lenient().when(contaService.validaNovoSaldo(co, co.getSaldo()- valor)).thenReturn(false);
+        final var contaCaptor = ArgumentCaptor.forClass(Conta.class);
+        final var co = new Conta(1, 100);
+        final var cd = new ContaBonus(2, 90);
+        final var valor = 99.9;
+
+        final var saldoExperadoOrigem = co.getSaldo() - valor;
+        final var saldoExperadoDestino = cd.getSaldo() + valor;
+        int bonus = (int) (cd.getBonus() + (int) valor / 150);
+
+        when(contaRepository.findByNumero(co.getNumero())).thenReturn(Optional.of(co));
+        when(contaRepository.findByNumero(cd.getNumero())).thenReturn(Optional.of(cd));
+
         contaService.transferir(co.getNumero(), cd.getNumero(), valor);
-        
-        co.setSaldo(co.getSaldo() - valor);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(co);
-        
-        int bonus = (int) (cd.getBonus() + (int) valor/150);
-        cd.setBonus(bonus);
-        cd.setSaldo(cd.getSaldo() - valor);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(cd);
-          
+
+        verify(contaRepository, times(2)).save(contaCaptor.capture());
+
+        assertThat(contaCaptor.getAllValues().get(0))
+                .isExactlyInstanceOf(Conta.class)
+                .matches(c -> c.getSaldo() == saldoExperadoOrigem)
+                .matches(c -> c.getNumero() == co.getNumero());
+
+        assertThat(contaCaptor.getAllValues().get(1))
+                .isExactlyInstanceOf(ContaBonus.class)
+                .matches(c -> c.getSaldo() == saldoExperadoDestino)
+                .matches(c -> c.getNumero() == cd.getNumero())
+                .matches(c -> ((ContaBonus) c).getBonus() == bonus);
     }
 
     // TESTES EM CADASTRAR CONTA
     @Test
     @DisplayName("Cadastrar Conta Padrão")
     void testCadastrarContaTipo1() {
-        contaService.cadastrarConta(1, 1, 100.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(1, 100.0));
+        
+        int numeroConta = 1;
+        int tipoConta = 1; // Tipo padrão
+        double saldoInicial = 100.0;
+
+        contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial);
+        
+        ArgumentCaptor<Conta> contaCaptor = ArgumentCaptor.forClass(Conta.class);
+        verify(contaRepository, times(1)).save(contaCaptor.capture());
+
+        Conta contaSalva = contaCaptor.getValue();
+        assertThat(contaSalva)
+                .isNotNull()
+                .isExactlyInstanceOf(Conta.class)
+                .matches(c -> c.getNumero() == numeroConta)
+                .matches(c -> c.getSaldo() == saldoInicial);
     }
 
     @Test
     @DisplayName("Cadastrar Conta Bonus")
     void testCadastrarContaTipo2() {
-        contaService.cadastrarConta(2, 2, 200.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaBonus(2, 200.0));
+        
+        int numeroConta = 2;
+        int tipoConta = 2; // Tipo bônus
+        double saldoInicial = 200.0;
+
+        contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial);
+
+        ArgumentCaptor<ContaBonus> contaCaptor = ArgumentCaptor.forClass(ContaBonus.class);
+        verify(contaRepository, times(1)).save(contaCaptor.capture());
+
+        ContaBonus contaSalva = contaCaptor.getValue();
+        assertThat(contaSalva)
+                .isNotNull()
+                .isExactlyInstanceOf(ContaBonus.class)
+                .matches(c -> c.getNumero() == numeroConta)
+                .matches(c -> c.getSaldo() == saldoInicial)
+                .matches(c -> c.getBonus() == 10);
     }
 
     @Test
     @DisplayName("Cadastrar Conta Poupança")
     void testCadastrarContaTipo3() {
-        contaService.cadastrarConta(3, 3, 300.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(3, 300.0));
+        
+        int numeroConta = 3;
+        int tipoConta = 3; // Tipo poupança
+        double saldoInicial = 300.0;
+        
+        contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial);
+        
+        ArgumentCaptor<ContaPoupanca> contaCaptor = ArgumentCaptor.forClass(ContaPoupanca.class);
+        verify(contaRepository, times(1)).save(contaCaptor.capture());
+
+        ContaPoupanca contaSalva = contaCaptor.getValue();
+        assertThat(contaSalva)
+                .isNotNull()
+                .isExactlyInstanceOf(ContaPoupanca.class)
+                .matches(c -> c.getNumero() == numeroConta)
+                .matches(c -> c.getSaldo() == saldoInicial);
     }
 
     @Test
     @DisplayName("Cadastrar Conta com Saldo Zero")
     void testCadastrarContaComSaldoZero() {
-        contaService.cadastrarConta(4, 1, 0.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(4, 0.0));
+        
+        int numeroConta = 4;
+        int tipoConta = 1; // Tipo padrão
+        double saldoInicial = 0.0;
+
+        contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial);
+
+        ArgumentCaptor<Conta> contaCaptor = ArgumentCaptor.forClass(Conta.class);
+        verify(contaRepository, times(1)).save(contaCaptor.capture());
+
+        Conta contaSalva = contaCaptor.getValue();
+        assertThat(contaSalva)
+                .isNotNull()
+                .isExactlyInstanceOf(Conta.class)
+                .matches(c -> c.getNumero() == numeroConta)
+                .matches(c -> c.getSaldo() == saldoInicial);
     }
 
     @Test
     @DisplayName("Cadastrar Conta com Saldo Negativo")
     void testCadastrarContaComSaldoNegativo() {
-        // TODO acrescentar essa validação no service
-        contaService.cadastrarConta(5, 2, -50.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaBonus(5, -50.0));
+        
+        int numeroConta = 5;
+        int tipoConta = 2; // Tipo bônus
+        double saldoInicial = -50.0;
+
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial));
+
+        assertThat(exception).hasMessage("O saldo da conta não pode ser negativo.");
+        verify(contaRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Cadastrar Conta com Tipo Inválido")
     void testCadastrarContaComTipoInvalido() {
-        contaService.cadastrarConta(6, 4, 100.0);
-        Mockito.verify(contaRepository, Mockito.never()).save(new Conta(6, 100.0));
+        
+        int numeroConta = 6;
+        int tipoConta = 4; // Tipo inválido
+        double saldoInicial = 100.0;
+
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial));
+
+        assertThat(exception).hasMessage("Tipo de conta inválido. Os valores válidos são 1, 2 e 3.");
+        verify(contaRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Cadastrar Conta com Número Negativo")
     void testCadastrarContaComNumeroNegativo() {
-        // TODO acrescentar essa validação no service
-        contaService.cadastrarConta(-1, 1, 100.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new Conta(-1, 100.0));
+        
+        int numeroConta = -1;
+        int tipoConta = 1; // Tipo padrão
+        double saldoInicial = 100.0;
+
+        
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial));
+
+        assertThat(exception).hasMessage("O número da conta deve ser um valor positivo.");
+        verify(contaRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Cadastrar Conta com Saldo Alto")
     void testCadastrarContaComSaldoAlto() {
-        contaService.cadastrarConta(7, 3, 1_000_000.0);
-        Mockito.verify(contaRepository, Mockito.times(1)).save(new ContaPoupanca(7, 1_000_000.0));
-    }
+        
+        int numeroConta = 7;
+        int tipoConta = 3; // Tipo poupança
+        double saldoInicial = 1_000_000.0;
 
-    // TESTES EM CONSULTAR CONTA
-    // TODO
+        contaService.cadastrarConta(numeroConta, tipoConta, saldoInicial);
+
+        ArgumentCaptor<ContaPoupanca> contaCaptor = ArgumentCaptor.forClass(ContaPoupanca.class);
+        verify(contaRepository, times(1)).save(contaCaptor.capture());
+
+        ContaPoupanca contaSalva = contaCaptor.getValue();
+        assertThat(contaSalva)
+                .isNotNull()
+                .isExactlyInstanceOf(ContaPoupanca.class)
+                .matches(c -> c.getNumero() == numeroConta)
+                .matches(c -> c.getSaldo() == saldoInicial);
+    }
 
     // TESTES EM CONSULTAR SALDO
     @Test
-    @DisplayName("Consultar Saldo Conta Bonus")
-    void testConsultarSaldoContaBonus() {
-        ContaBonus contaBonus = new ContaBonus(1, 100.0);
-        contaBonus.setBonus(50);
-        Mockito.when(contaRepository.findByNumero(1)).thenReturn(Optional.of(contaBonus));
+    @DisplayName("Consultar saldo de conta normal")
+    public void testConsultarSaldoContaNormal() {
+        Conta conta = new Conta(1, 500.0);
 
-        contaService.consultarSaldo(1);
+        when(contaRepository.findByNumero(1)).thenReturn(Optional.of(conta));
 
-        String expectedOutput = "O bônus da conta é: 50.0\nO saldo da conta é: 100.0";
-        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+        Optional<Double> saldo = contaService.consultarSaldo(1);
+
+        assertTrue(saldo.isPresent());
+        assertEquals(500.0, saldo.get());
     }
 
     @Test
-    @DisplayName("Consultar Saldo Conta Padrão")
-    void testConsultarSaldoConta() {
-        Conta conta = new Conta(2, 200.0);
-        Mockito.when(contaRepository.findByNumero(2)).thenReturn(Optional.of(conta));
+    @DisplayName("Consultar saldo de conta bônus")
+    public void testConsultarSaldoContaBonus() {
+        ContaBonus contaBonus = new ContaBonus(2, 300.0);
 
-        contaService.consultarSaldo(2);
+        when(contaRepository.findByNumero(2)).thenReturn(Optional.of(contaBonus));
 
-        String expectedOutput = "O saldo da conta é: 200.0";
-        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+        Optional<Double> saldo = contaService.consultarSaldo(2);
+
+        assertTrue(saldo.isPresent());
+        assertEquals(310.0, saldo.get());
     }
 
     @Test
-    @DisplayName("Consultar Saldo Conta Não Existente")
-    void testConsultarSaldoContaNaoExistente() {
-        Mockito.when(contaRepository.findByNumero(3)).thenReturn(Optional.empty());
+    @DisplayName("Consultar saldo de conta não existente")
+    public void testConsultarSaldoContaNaoExistente() {
+        when(contaRepository.findByNumero(3)).thenReturn(Optional.empty());
 
-        contaService.consultarSaldo(3);
+        Optional<Double> saldo = contaService.consultarSaldo(3);
 
-        String expectedOutput = "Conta não existe!";
-        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+        assertFalse(saldo.isPresent());
+    }
+
+    // TESTES EM CONSULTAR CONTA
+    @Test
+    @DisplayName("Consultar Dados Conta Normal")
+    void testConsultarDadosContaNormal() {
+        Conta conta = new Conta(1, 200.0);
+        when(contaRepository.findByNumero(1)).thenReturn(Optional.of(conta));
+
+        ContaDTO contaDTO = contaService.consultarDados(1);
+
+        assertThat(contaDTO)
+                .isNotNull()
+                .matches(dto -> dto.numero() == 1)
+                .matches(dto -> dto.tipo() == 1) // Tipo padrão
+                .matches(dto -> dto.saldo() == 200.0);
+    }
+
+    @Test
+    @DisplayName("Consultar Dados Conta Bonus")
+    void testConsultarDadosContaBonus() {
+        ContaBonus contaBonus = new ContaBonus(2, 300.0);
+        when(contaRepository.findByNumero(2)).thenReturn(Optional.of(contaBonus));
+
+        ContaDTO contaDTO = contaService.consultarDados(2);
+
+        assertThat(contaDTO)
+                .isNotNull()
+                .matches(dto -> dto.numero() == 2)
+                .matches(dto -> dto.tipo() == 2) // Tipo bônus
+                .matches(dto -> dto.saldo() == 300.0);
+    }
+
+    @Test
+    @DisplayName("Consultar Dados Conta Poupança")
+    void testConsultarDadosContaPoupanca() {
+        ContaPoupanca contaPoupanca = new ContaPoupanca(3, 400.0);
+        when(contaRepository.findByNumero(3)).thenReturn(Optional.of(contaPoupanca));
+
+        ContaDTO contaDTO = contaService.consultarDados(3);
+
+        assertThat(contaDTO)
+                .isNotNull()
+                .matches(dto -> dto.numero() == 3)
+                .matches(dto -> dto.tipo() == 3) // Tipo poupança
+                .matches(dto -> dto.saldo() == 400.0);
+    }
+
+    @Test
+    @DisplayName("Consultar Dados Conta Não Existente")
+    void testConsultarDadosContaNaoExistente() {
+        when(contaRepository.findByNumero(4)).thenReturn(Optional.empty());
+
+        final var exception = assertThrows(NotFoundException.class,
+                () -> contaService.consultarDados(4));
+
+        assertThat(exception).hasMessage("Conta não encontrada");
     }
 
     // TESTES EM CREDITAR CONTA
@@ -346,73 +494,85 @@ public class ContaServiceTest {
     public void testCreditarValorInvalido() {
         double valor = -1;
 
-        contaService.creditarConta(1, valor);
-        Mockito.verify(contaRepository, Mockito.times(0)).findByNumero(Mockito.anyInt());
+        final var exception = assertThrows(BadRequestException.class,
+                () -> contaService.creditarConta(1, valor));
 
-        String expectedOutput = "Valor não pode ser negativo";
-        assertEquals(expectedOutput, outputStreamCaptor.toString().trim());
+        assertThat(exception).hasMessage("Valor não pode ser negativo");
+
+        verify(contaRepository, never()).findByNumero(anyInt());
+        verify(contaRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Creditar em conta não existente")
     public void testCreditarContaInexistente() {
-        // TODO acrescentar mensagem de retorno nessa validação no service
         double valor = 100;
 
-        Mockito.when(contaRepository.findByNumero(1)).thenReturn(Optional.empty());
+        when(contaRepository.findByNumero(1)).thenReturn(Optional.empty());
 
-        contaService.creditarConta(1, valor);
-        Mockito.verify(contaRepository, Mockito.times(0)).save(Mockito.any());
+        final var exception = assertThrows(NotFoundException.class,
+                () -> contaService.creditarConta(1, valor));
+
+        assertThat(exception).hasMessage("Conta de origem ou destino não encontrada");
+
+        verify(contaRepository).findByNumero(1);
+        verify(contaRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Creditar valor em conta existente")
-    public void testCreditarPadrao() {
-        Conta conta = new Conta(1, 200);
-        double valor = 100;
+    public void testCreditarValorEmContaExistente() {
+        final var contaCaptor = ArgumentCaptor.forClass(Conta.class);
+        final var conta = new Conta(1, 200);
+        final var valor = 100;
+        final var novoSaldo = conta.getSaldo() + valor;
 
-        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
-
-        double saldoEsperado = conta.getSaldo() + valor;
+        when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
 
         contaService.creditarConta(conta.getNumero(), valor);
 
-        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
-        assertEquals(saldoEsperado, conta.getSaldo());
+        verify(contaRepository).save(contaCaptor.capture());
+        assertThat(contaCaptor.getValue())
+                .matches(c -> c.getSaldo() == novoSaldo)
+                .matches(c -> c.getNumero() == conta.getNumero());
     }
 
     @Test
-    @DisplayName("Creditar valor em conta bônus")
-    public void testCreditarBonus() {
-        ContaBonus conta = new ContaBonus(1, 200);
-        double valor = 150;
+    @DisplayName("Creditar valor em conta bonus")
+    public void testCreditarValorEmContaBonus() {
+        final var contaCaptor = ArgumentCaptor.forClass(ContaBonus.class);
+        final var conta = new ContaBonus(1, 200);
+        final var valor = 100;
+        final var novoSaldo = conta.getSaldo() + valor;
 
-        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
-
-        double saldoEsperado = conta.getSaldo() + valor;
-        double bonusEsperado = conta.getBonus();
+        when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
 
         contaService.creditarConta(conta.getNumero(), valor);
 
-        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
-        assertEquals(saldoEsperado, conta.getSaldo());
-        assertEquals(bonusEsperado, conta.getBonus());
+        verify(contaRepository).save(contaCaptor.capture());
+        assertThat(contaCaptor.getValue())
+                .isExactlyInstanceOf(ContaBonus.class)
+                .matches(c -> c.getSaldo() == novoSaldo)
+                .matches(c -> c.getNumero() == conta.getNumero());
     }
 
     @Test
     @DisplayName("Creditar valor em conta poupança")
-    public void testCreditarPoupanca() {
-        ContaPoupanca conta = new ContaPoupanca(1, 300);
-        double valor = 200;
+    public void testCreditarValorEmContaPoupanca() {
+        final var contaCaptor = ArgumentCaptor.forClass(ContaPoupanca.class);
+        final var conta = new ContaPoupanca(1, 200);
+        final var valor = 100;
+        final var novoSaldo = conta.getSaldo() + valor;
 
-        Mockito.when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
-
-        double saldoEsperado = conta.getSaldo() + valor;
+        when(contaRepository.findByNumero(conta.getNumero())).thenReturn(Optional.of(conta));
 
         contaService.creditarConta(conta.getNumero(), valor);
 
-        Mockito.verify(contaRepository, Mockito.times(1)).save(conta);
-        assertEquals(saldoEsperado, conta.getSaldo());
+        verify(contaRepository).save(contaCaptor.capture());
+        assertThat(contaCaptor.getValue())
+                .isExactlyInstanceOf(ContaPoupanca.class)
+                .matches(c -> c.getSaldo() == novoSaldo)
+                .matches(c -> c.getNumero() == conta.getNumero());
     }
 
 }
