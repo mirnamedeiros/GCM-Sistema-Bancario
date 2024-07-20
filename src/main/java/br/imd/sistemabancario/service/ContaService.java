@@ -26,6 +26,18 @@ public class ContaService {
         if (contaRepository.existsByNumero(numero)) {
             throw new BadRequestException("Este número de conta já está em uso. Por favor, escolha outro número.");
         }
+
+        if (numero <= 0) {
+            throw new BadRequestException("O número da conta deve ser um valor positivo.");
+        }
+
+        if (saldo < 0) {
+            throw new BadRequestException("O saldo da conta não pode ser negativo.");
+        }
+
+        if (tipo != 1 && tipo != 2 && tipo != 3) {
+            throw new BadRequestException("Tipo de conta inválido. Os valores válidos são 1, 2 e 3.");
+        }
         if (tipo == 1) {
             contaRepository.save(new Conta(numero, saldo));
         } else if (tipo == 2) {
@@ -57,7 +69,7 @@ public class ContaService {
         return contaRepository.findByNumero(numero)
                 .map(conta -> {
                     if (conta instanceof ContaBonus contaBonus) {
-                        return contaBonus.getBonus();
+                        return contaBonus.getSaldo() + contaBonus.getBonus();
                     }
                     return conta.getSaldo();
                 });
