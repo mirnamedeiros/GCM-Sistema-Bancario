@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
 
     runs-on: ubuntu-latest
     permissions: write-all
@@ -26,12 +26,6 @@ jobs:
       run: mvn --batch-mode package
     - name: Testing with Maven
       run: mvn test
-      
-    - name: Upload Artifact GitHub Action
-      uses: actions/upload-artifact@v3
-      with: 
-        name: build-result
-        path: ./target/GCM-Sistema-Bancario-0.0.1-SNAPSHOT.jar
 
     - name: Bump version and push tag
       id: tag_version
