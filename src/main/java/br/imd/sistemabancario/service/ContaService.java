@@ -1,6 +1,7 @@
 package br.imd.sistemabancario.service;
 
 
+import br.imd.sistemabancario.controller.dto.ContaDTO;
 import br.imd.sistemabancario.exception.BadRequestException;
 import br.imd.sistemabancario.exception.NotFoundException;
 import br.imd.sistemabancario.model.Conta;
@@ -32,6 +33,20 @@ public class ContaService {
         } else if (tipo == 3) {
             contaRepository.save(new ContaPoupanca(numero, saldo));
         }
+    }
+
+    public ContaDTO consultarDados(int numero) {
+        Conta conta = contaRepository.findByNumero(numero)
+                .orElseThrow(NotFoundException::new);
+
+        int tipo = 1;
+        if (conta instanceof ContaBonus) {
+            tipo = 2;
+        } else if (conta instanceof ContaPoupanca) {
+            tipo = 3;
+        }
+
+        return new ContaDTO(conta.getNumero(), tipo, conta.getSaldo());
     }
 
     public boolean verificarContaExistente(int numero) {
