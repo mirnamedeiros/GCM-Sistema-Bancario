@@ -44,6 +44,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=mirnamedeiros_GCM-Sistema-Bancario
 
+      - name: List directory
+        run: ls -la
+
       - name: Testing with Maven
         run: mvn test
 
@@ -55,6 +58,9 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           path: "${{ github.ref_name }}.zip"
+
+      - name: List directory
+        run: ls -la
 
       - name: Bump version and push tag
         id: tag_version
@@ -77,6 +83,9 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: List directory
+        run: ls -la
 
       - name: Build and push Docker image
         id: push
