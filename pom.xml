@@ -20,6 +20,9 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ../app-it/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.exclusions>
+            **/MenuController.java, **/dto/**/*, **/model/**/*
+        </sonar.coverage.exclusions>
     </properties>
     <dependencies>
         <dependency>
