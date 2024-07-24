@@ -11,5 +11,5 @@ public class Main {
         final var context = SpringApplication.run(Main.class, args);
         context.getBean(MenuController.class).run();
     }
-
+    a
 }
