@@ -1,9 +1,9 @@
-package model;
+package br.imd.sistemabancario.model;
 
-public class ContaPoupanca extends Conta{
+public class ContaPoupanca extends Conta {
 
-    public ContaPoupanca(int numero) {
-        super(numero);
+    public ContaPoupanca(int numero, double saldo) {
+        super(numero, saldo);
     }
 
     public void renderJuros(double taxaJuros) {
