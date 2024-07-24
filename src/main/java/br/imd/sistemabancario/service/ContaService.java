@@ -96,7 +96,7 @@ public class ContaService {
 
         contaRepository.findByNumero(numero)
                 .ifPresentOrElse(conta -> {
-                    conta.setSaldo(conta.getSaldo()); //  + valor
+                    conta.setSaldo(conta.getSaldo() + valor);
                     contaRepository.save(conta);
                 }, () -> {
                     throw new NotFoundException("Conta de origem ou destino não encontrada");
