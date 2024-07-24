@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Service
 public class ContaService {
-    private static final double LIMITE_NEGATIVO = -1_000.0;
+    private static final double LIMITE_NEGATIVO = -2_000.0;
 
     private final ContaRepository contaRepository;
 
